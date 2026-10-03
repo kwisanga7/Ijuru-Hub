@@ -1,0 +1,5 @@
+{% extends "coworking/base.html" %}
+{% block title %}Edit member profile{% endblock %}
+{% block content %}
+<section class="form-page"><a class="back-link" href="{% url 'coworking:member_profile' user.username %}">← View your public profile</a><div class="form-layout"><div><div class="eyebrow">YOUR IJURU HUB IDENTITY</div><h1>Set up your<br>member profile.</h1><p>Choose what other members and visitors can see. Your email stays private unless you choose to show it.</p></div><form method="post" class="form-card">{% csrf_token %}<div class="form-fields">{% for field in form %}<div class="field{% if field.name == 'show_email' %} checkbox-field{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}{% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div><button class="button form-submit" type="submit">Save profile <span>↗</span></button></form></div></section>
+{% endblock %}

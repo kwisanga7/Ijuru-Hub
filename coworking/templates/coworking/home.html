@@ -1,0 +1,32 @@
+{% extends "coworking/base.html" %}
+{% load static %}
+{% block title %}Coworking in Kigali{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR SPACE TO DO GREAT WORK</div>
+    <h1>Make room for<br><span>what’s next.</span></h1>
+    <p class="hero-intro">A thoughtful place to focus, meet and grow. Find the desk, office or meeting room that fits your day.</p>
+    <div class="hero-actions"><a class="button" href="{% url 'coworking:listing_list' %}">Explore our spaces <span aria-hidden="true">↗</span></a><a class="text-link" href="#about">Discover Ijuru Hub <span aria-hidden="true">↓</span></a></div>
+    <div class="hero-note"><span class="note-line"></span><span>DESIGNED FOR THE WAY YOU WORK</span></div>
+  </div>
+  <div class="hero-art hero-real-photo">
+    <img class="hero-photo" src="{% static 'coworking/images/ijuru-building.webp' %}" alt="Ijuru Hub coworking space building in Kigali">
+    <div class="art-label"><span class="label-dot"></span><span>IJURU HUB · KIGALI</span></div>
+    <div class="art-index">42 KG 40 ST <span>·</span> 01</div>
+  </div>
+</section>
+<section class="quick-strip">
+  <span>FIND YOUR FIT</span><a href="{% url 'coworking:listing_list' %}?category=desk">Desks <b>↗</b></a><a href="{% url 'coworking:listing_list' %}?category=private_office">Private offices <b>↗</b></a><a href="{% url 'coworking:listing_list' %}?category=meeting_room">Meeting rooms <b>↗</b></a><a href="{% url 'coworking:listing_list' %}?category=event_space">Events <b>↗</b></a>
+</section>
+<section class="section featured-section">
+  <div class="section-heading"><div><div class="eyebrow">A SPACE FOR EVERY IDEA</div><h2>Find your place<br>to get things done.</h2></div><a class="text-link" href="{% url 'coworking:listing_list' %}">View all spaces <span>↗</span></a></div>
+  {% if featured_spaces %}<div class="space-grid">{% for listing in featured_spaces %}{% include "coworking/partials/space_card.html" with listing=listing %}{% endfor %}</div>{% else %}<div class="empty-feature"><div class="empty-icon">✳</div><div><h3>Spaces are being prepared</h3><p>Our team is setting up the first listings. Check back soon to see what’s available.</p></div></div>{% endif %}
+</section>
+<section class="section community-section" id="community">
+  <div class="section-heading"><div><div class="eyebrow">FROM THE IJURU HUB COMMUNITY</div><h2>What's happening<br>around the hub.</h2></div><div class="community-actions">{% if user.is_authenticated %}<a class="button button-small" href="{% url 'coworking:community_post_create' %}">Share an update <span>＋</span></a>{% else %}<a class="text-link" href="{% url 'account_login' %}?next={% url 'coworking:community_post_create' %}">Sign in to post <span>↗</span></a>{% endif %}</div></div>
+  {% if community_posts %}<div class="community-grid">{% for post in community_posts %}<article class="community-card"><div class="community-card-top"><span class="post-tag post-tag-{{ post.category }}">{{ post.get_category_display }}</span>{% if post.event_date %}<time>{{ post.event_date|date:"M j, Y · H:i" }}</time>{% endif %}</div><h3>{{ post.title }}</h3><p>{{ post.body|linebreaksbr }}</p><div class="post-byline">Shared by <a href="{% url 'coworking:member_profile' post.author.username %}">{{ post.author.member_profile.display_name|default:post.author.username }}</a> · {{ post.created_at|date:"M j" }}</div></article>{% endfor %}</div>{% else %}<div class="community-empty"><h3>Make the first post</h3><p>Share an event, a promotion or an opportunity with the Ijuru Hub community.</p>{% if user.is_authenticated %}<a class="text-link" href="{% url 'coworking:community_post_create' %}">Post to the community <span>↗</span></a>{% else %}<a class="text-link" href="{% url 'account_signup' %}">Join the community <span>↗</span></a>{% endif %}</div>{% endif %}
+</section>
+<section class="about-band" id="about"><div class="about-number">01 <span>/ ABOUT</span></div><div class="about-copy"><div class="eyebrow">WORK, WITH ROOM TO BREATHE</div><h2>Good work needs<br>a good place.</h2><p>Ijuru Hub brings people, ideas and opportunity together in Kigali. Drop in for a focused day, settle into a private office, or bring your team together around a table.</p><a class="text-link" href="{% url 'coworking:listing_list' %}">Find your space <span>↗</span></a></div><div class="about-graphic"><div class="graphic-circle"></div><div class="graphic-block"></div><span>MAKE IT HAPPEN</span></div></section>
+<section class="cta-band"><div><div class="eyebrow">YOUR NEXT GOOD DAY STARTS HERE</div><h2>Come make something<br>happen.</h2></div><a class="button button-light" href="{% url 'coworking:listing_list' %}">Browse available spaces <span>↗</span></a></section>
+{% endblock %}

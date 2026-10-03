@@ -1,0 +1,5 @@
+{% extends "coworking/base.html" %}
+{% block title %}Share with the community{% endblock %}
+{% block content %}
+<section class="form-page"><a class="back-link" href="{% url 'coworking:home' %}#community">← Community board</a><div class="form-layout"><div><div class="eyebrow">SHARE WITH THE HUB</div><h1>Put a good<br>thing in motion.</h1><p>Post an event, promotion or job opportunity for the Ijuru Hub community. Your post will be visible on the community board as soon as you share it.</p></div><form method="post" class="form-card">{% csrf_token %}<div class="form-fields">{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}{% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div><button class="button form-submit" type="submit">Publish post <span>↗</span></button></form></div></section>
+{% endblock %}

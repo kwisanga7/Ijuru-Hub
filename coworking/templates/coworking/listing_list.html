@@ -1,0 +1,10 @@
+{% extends "coworking/base.html" %}
+{% block title %}Browse spaces{% endblock %}
+{% block content %}
+<section class="catalog-head"><div class="eyebrow">IJURU HUB · KIGALI</div><h1>Find a space<br><span>that works for you.</span></h1><p>Browse desks, private offices and rooms. Check the details, compare rates and choose your day, week or month.</p></section>
+<section class="catalog-body">
+  <div class="availability-filter"><div class="result-count">CHECK AVAILABILITY FOR</div><form method="get" class="availability-form">{% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}<select name="period" aria-label="Booking period">{% for value,label in booking_periods %}<option value="{{ value }}" {% if selected_period == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><input type="date" name="starts_on" value="{{ selected_start_date|date:'Y-m-d' }}" aria-label="Start date"><button class="button button-small" type="submit">Check spaces</button></form></div>
+  <div class="catalog-toolbar"><div class="result-count">{{ listings|length }} {% if listings|length == 1 %}LISTING{% else %}LISTINGS{% endif %} · {% for value,label in booking_periods %}{% if selected_period == value %}{{ label|upper }}{% endif %}{% endfor %} FROM {{ selected_start_date|date:"j M Y" }}</div><div class="filter-row"><a class="filter-pill {% if not selected_category %}selected{% endif %}" href="{% url 'coworking:listing_list' %}">All spaces</a>{% for value,label in categories %}<a class="filter-pill {% if selected_category == value %}selected{% endif %}" href="?category={{ value }}">{{ label }}</a>{% endfor %}</div></div>
+  {% if listings %}<div class="space-grid catalog-grid">{% for listing in listings %}{% include "coworking/partials/space_card.html" with listing=listing %}{% endfor %}</div>{% else %}<div class="empty-state"><div class="empty-icon">✳</div><h2>No spaces listed yet</h2><p>Ijuru Hub’s team is preparing the space listings. Please check again soon.</p></div>{% endif %}
+</section>
+{% endblock %}

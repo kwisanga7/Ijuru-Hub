@@ -1,0 +1,19 @@
+{% extends "coworking/base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<section class="notification-page">
+  <div class="notification-heading"><div><div class="eyebrow">IJURU HUB · UPDATES</div><h1>Notifications</h1><p>Booking, payment and visit updates for your account.</p></div>{% if unread_notification_count %}<form method="post" action="{% url 'coworking:notification_mark_all_read' %}">{% csrf_token %}<button class="notification-read-all" type="submit">Mark all as read</button></form>{% endif %}</div>
+  <div class="notification-list">
+    {% for notification in page %}
+      <a class="notification-item{% if not notification.read_at %} notification-unread{% endif %}" href="{% url 'coworking:notification_open' notification.pk %}">
+        <span class="notification-icon notification-icon-{{ notification.category }}" aria-hidden="true">{% if notification.category == "payment" %}RWF{% elif notification.category == "visit" %}↗{% elif notification.category == "account" %}◎{% else %}▦{% endif %}</span>
+        <span class="notification-copy"><strong>{{ notification.title }}</strong><span>{{ notification.message }}</span><time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|date:"j M Y · H:i" }}</time></span>
+        {% if not notification.read_at %}<span class="notification-unread-dot" aria-label="Unread"></span>{% endif %}
+      </a>
+    {% empty %}
+      <div class="notification-empty"><span>♢</span><h2>You’re all caught up</h2><p>New booking, payment and visit updates will appear here.</p></div>
+    {% endfor %}
+  </div>
+  {% if page.has_other_pages %}<nav class="manage-pagination"><span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span><div>{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Previous</a>{% endif %}{% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next →</a>{% endif %}</div></nav>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ijuru_hub
+      POSTGRES_USER: ijuru_dev
+      POSTGRES_PASSWORD: ijuru_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - ijuru_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  ijuru_postgres_data:

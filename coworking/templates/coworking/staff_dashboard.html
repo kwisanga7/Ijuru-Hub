@@ -1,0 +1,38 @@
+{% extends "coworking/base.html" %}
+{% block title %}Staff dashboard{% endblock %}
+{% block content %}
+<section class="staff-dashboard">
+  <div class="staff-head">
+    <div><div class="eyebrow">IJURU HUB · OPERATIONS</div><h1>Good day,<br><span>{{ user.first_name|default:user.username }}.</span></h1><p>Here’s what needs attention at the space today.</p></div>
+    <a class="button" href="{% url 'coworking:staff_space_create' %}">Add a space <span>↗</span></a>
+  </div>
+  <div class="staff-metrics">
+    <a class="metric-card metric-attention" href="#payment-review"><span class="metric-label">PAYMENT REVIEW</span><strong>{{ payment_queue_count }}</strong><span class="metric-foot">Bookings awaiting your review <b>↘</b></span></a>
+    <div class="metric-card"><span class="metric-label">SPACES AVAILABLE TODAY</span><strong>{{ available_today }}</strong><span class="metric-foot">Units across active listings</span></div>
+    <a class="metric-card" href="{% url 'coworking:staff_spaces' %}"><span class="metric-label">ACTIVE LISTINGS</span><strong>{{ active_listing_count }}</strong><span class="metric-foot">Desks, offices and rooms <b>↗</b></span></a>
+    <div class="metric-card"><span class="metric-label">CHECKED IN TODAY</span><strong>{{ today_visits }}</strong><span class="metric-foot">Visits recorded for {{ today|date:"j M" }}</span></div>
+  </div>
+
+  <div class="staff-section-head" id="payment-review"><div><div class="eyebrow">ACTION NEEDED</div><h2>Payment review</h2><p>Approve verified payments to confirm bookings. Holds last one hour from form submission.</p></div><a class="text-link" href="{% url 'coworking:staff_bookings' %}?status=payment_review">All booking records <span>↗</span></a></div>
+  {% if payment_queue %}
+    <div class="review-list">
+      {% for booking in payment_queue %}
+        <article class="review-card {% if not booking.payment_review_hold_active %}review-expired{% endif %}">
+          <div class="review-main"><div class="review-topline"><span class="booking-ref">BOOKING #{{ booking.pk }}</span><span class="review-state"><i></i>{% if booking.payment_review_hold_active %}HOLD ACTIVE{% else %}HOLD EXPIRED · CHECK AVAILABILITY{% endif %}</span></div><h3>{{ booking.listing.name }}</h3><div class="review-meta"><span>{{ booking.customer.get_full_name|default:booking.customer.username }}{% if booking.customer.email %} · {{ booking.customer.email }}{% endif %}</span><span>{{ booking.starts_on|date:"j M Y" }} – {{ booking.ends_on|date:"j M Y" }} · {{ booking.get_period_display|lower }}</span></div>{% if booking.payment_reference %}<p class="payment-ref"><b>Payment reference</b> {{ booking.payment_reference }}</p>{% else %}<p class="payment-ref">No payment reference supplied.</p>{% endif %}</div>
+          <div class="review-amount"><span>AMOUNT</span><strong>{{ booking.amount_due }}{% if booking.currency_code %} {{ booking.currency_code }}{% endif %}</strong></div>
+          <div class="review-actions"><form method="post" action="{% url 'coworking:staff_booking_review' booking.pk 'approve' %}">{% csrf_token %}<button class="button approve-button" type="submit">Approve & confirm</button></form><form method="post" action="{% url 'coworking:staff_booking_review' booking.pk 'reject' %}">{% csrf_token %}<button class="reject-button" type="submit">Reject payment</button></form></div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="staff-empty"><span class="empty-icon">✓</span><div><h3>All caught up</h3><p>There are no bookings waiting for payment review.</p></div></div>
+  {% endif %}
+
+  {% if momo_pending %}<div class="staff-section-head upcoming-head"><div><div class="eyebrow">CUSTOMER ACTION</div><h2>Awaiting MoMo approval</h2><p>These requests are waiting for the customer to approve on their phone. MTN will confirm them automatically.</p></div></div><div class="upcoming-list">{% for booking in momo_pending %}<a class="upcoming-row" href="{% url 'coworking:booking_detail' booking.pk %}"><span class="upcoming-date"><b>#{{ booking.pk }}</b><small>HOLD</small></span><span class="upcoming-info"><strong>{{ booking.listing.name }}</strong><small>{{ booking.customer.get_full_name|default:booking.customer.username }} · {{ booking.momo_payment.payer_number }}</small></span><span class="upcoming-range">{{ booking.starts_on|date:"j M" }} – {{ booking.ends_on|date:"j M Y" }}</span><span class="upcoming-state">PAYMENT PENDING</span><span class="row-arrow">↗</span></a>{% endfor %}</div>{% endif %}
+  {% if payment_issues %}<div class="staff-section-head"><div><div class="eyebrow">STAFF FOLLOW-UP</div><h2>Payment needs attention</h2><p>MTN confirmed payment, but the space was no longer available. Contact the customer to arrange next steps.</p></div></div><div class="upcoming-list">{% for booking in payment_issues %}<a class="upcoming-row" href="{% url 'coworking:booking_detail' booking.pk %}"><span class="upcoming-date"><b>#{{ booking.pk }}</b><small>CHECK</small></span><span class="upcoming-info"><strong>{{ booking.listing.name }}</strong><small>{{ booking.customer.get_full_name|default:booking.customer.username }}</small></span><span class="upcoming-range">{{ booking.starts_on|date:"j M" }} – {{ booking.ends_on|date:"j M Y" }}</span><span class="upcoming-state">PAYMENT SUCCESSFUL</span><span class="row-arrow">↗</span></a>{% endfor %}</div>{% endif %}
+  <div class="staff-section-head upcoming-head"><div><div class="eyebrow">WHAT’S NEXT</div><h2>Upcoming bookings</h2><p>Confirmed bookings with an end date today or later.</p></div><a class="text-link" href="{% url 'coworking:staff_bookings' %}?status=booked">All bookings <span>↗</span></a></div>
+  {% if upcoming_bookings %}<div class="upcoming-list">{% for booking in upcoming_bookings %}<a class="upcoming-row" href="{% url 'coworking:booking_detail' booking.pk %}"><span class="upcoming-date"><b>{{ booking.starts_on|date:"j" }}</b><small>{{ booking.starts_on|date:"M"|upper }}</small></span><span class="upcoming-info"><strong>{{ booking.listing.name }}</strong><small>{{ booking.customer.get_full_name|default:booking.customer.username }} · {{ booking.get_period_display }}</small></span><span class="upcoming-range">{{ booking.starts_on|date:"j M" }} – {{ booking.ends_on|date:"j M Y" }}</span><span class="upcoming-state">{% if booking.checked_in_at and not booking.checked_out_at %}IN SPACE{% elif booking.checked_out_at %}VISIT COMPLETE{% else %}CONFIRMED{% endif %}</span><span class="row-arrow">↗</span></a>{% endfor %}</div>{% else %}<div class="staff-empty"><span class="empty-icon">✳</span><div><h3>No upcoming bookings yet</h3><p>Confirmed bookings will appear here.</p></div></div>{% endif %}
+
+    <div class="staff-shortcuts"><a href="{% url 'coworking:staff_spaces' %}"><span class="shortcut-icon">▦</span><span><b>Manage spaces</b><small>Edit availability, details, photos and rates</small></span><span class="row-arrow">↗</span></a><a href="{% url 'coworking:staff_bookings' %}"><span class="shortcut-icon">◷</span><span><b>Manage bookings</b><small>Search reservations, review payments and check visitors in</small></span><span class="row-arrow">↗</span></a><a href="{% url 'coworking:staff_people' %}"><span class="shortcut-icon">◉</span><span><b>Members and staff</b><small>View member accounts and manage staff access</small></span><span class="row-arrow">↗</span></a></div>
+</section>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "coworking/base.html" %}
+{% block title %}{% if listing %}Edit {{ listing.name }}{% else %}Add a space{% endif %}{% endblock %}
+{% block content %}
+<section class="manage-page manage-form-page"><a class="back-link" href="{% url 'coworking:staff_spaces' %}">← Manage spaces</a><div class="eyebrow">SPACE INVENTORY</div><h1>{% if listing %}Edit space{% else %}Add a space{% endif %}</h1><p class="manage-intro">Set the listing, available quantity and prices customers will see.</p><form method="post" enctype="multipart/form-data" class="manage-form">{% csrf_token %}{% include "coworking/partials/account_form_fields.html" %}<div class="manage-form-actions"><button class="button" type="submit">Save space <span>↗</span></button><a class="text-link" href="{% url 'coworking:staff_spaces' %}">Cancel</a></div></form></section>
+{% endblock %}

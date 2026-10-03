@@ -1,0 +1,9 @@
+{% extends "coworking/base.html" %}
+{% block title %}Manage spaces{% endblock %}
+{% block content %}
+<section class="manage-page">
+  <div class="manage-heading"><div><a class="back-link" href="{% url 'coworking:staff_dashboard' %}">← Staff dashboard</a><div class="eyebrow">SPACE INVENTORY</div><h1>Manage spaces</h1><p>Create and update the spaces customers can browse and book.</p></div><a class="button" href="{% url 'coworking:staff_space_create' %}">Add a space <span>↗</span></a></div>
+  <form class="manage-search" method="get"><input name="q" value="{{ query }}" placeholder="Search spaces"><button class="button" type="submit">Search</button></form>
+  <div class="manage-table-wrap"><table class="manage-table"><thead><tr><th>Space</th><th>Type</th><th>Quantity</th><th>Rates</th><th>Status</th><th></th></tr></thead><tbody>{% for space in spaces %}<tr><td><div class="manage-space-name">{% if space.photo %}<img src="{{ space.photo.url }}" alt="">{% else %}<span class="manage-photo-placeholder">▦</span>{% endif %}<span><b>{{ space.name }}</b><small>{{ space.slug }}</small></span></div></td><td>{{ space.get_category_display }}</td><td>{{ space.quantity }}</td><td><small>Day {{ space.daily_price }} · Week {{ space.weekly_price }} · Month {{ space.monthly_price }}{% if space.currency_code %} {{ space.currency_code }}{% endif %}</small></td><td><span class="manage-pill {% if not space.is_active %}manage-pill-off{% endif %}">{% if space.is_active %}Available to browse{% else %}Hidden{% endif %}</span></td><td><a class="manage-action" href="{% url 'coworking:staff_space_edit' space.pk %}">Edit ↗</a></td></tr>{% empty %}<tr><td colspan="6"><div class="staff-empty"><div><h3>No spaces found</h3><p>Add a listing or adjust the search.</p></div></div></td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "coworking/base.html" %}
+{% load static %}
+{% load socialaccount %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<section class="auth-page auth-login-page">
+  <aside class="auth-aside">
+    <a class="auth-brand" href="{% url 'coworking:home' %}"><img class="brand-logo" src="{% static 'coworking/images/ijuru-logo.png' %}" alt="Ijuru Hub Ltd"></a>
+    <div class="auth-aside-copy">
+      <div class="eyebrow">WELCOME BACK</div>
+      <h1>Make room<br>for what’s next.</h1>
+      <p>Your Kigali workspace is ready when you are. Sign in to see your bookings and visit details.</p>
+      <div class="auth-location"><span></span>42 KG 40 St · Kigali</div>
+    </div>
+    <div class="auth-decoration" aria-hidden="true"><i></i><i></i><i></i><b>IJURU<br>HUB</b></div>
+  </aside>
+  <div class="auth-main">
+    <div class="auth-card">
+      <a class="back-link" href="{% url 'coworking:listing_list' %}">← Browse spaces</a>
+      <div class="auth-mobile-mark"><span class="brand-mark">i</span> ijuru<span>hub</span></div>
+      <div class="eyebrow">YOUR WORKSPACE, YOUR WAY</div>
+      <h2>Welcome back</h2>
+      <p class="auth-subtitle">Sign in to manage your Ijuru Hub bookings.</p>
+      <form method="post" action="{% url 'account_login' %}" class="auth-form form-stack">
+        {% csrf_token %}
+        {% include "coworking/partials/account_form_fields.html" %}
+        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+        <button class="button full-button" type="submit">Sign in <span>↗</span></button>
+      </form>
+      <a class="auth-forgot" href="{% url 'account_reset_password' %}">Forgot your password?</a>
+      {% if google_sign_in_configured %}
+        <div class="auth-divider"><span>OR</span></div>
+        <form method="post" action="{% provider_login_url 'google' %}">{% csrf_token %}<button class="google-button" type="submit"><span class="google-g">G</span> Continue with Google</button></form>
+      {% endif %}
+      <p class="auth-switch">New to Ijuru Hub? <a href="{% url 'account_signup' %}">Create an account</a></p>
+      <p class="auth-secure-note"><span>●</span> Your account details stay private and secure.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

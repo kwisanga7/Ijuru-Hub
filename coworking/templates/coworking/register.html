@@ -1,0 +1,10 @@
+{% extends "coworking/base.html" %}
+{% load static %}
+{% load socialaccount %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<section class="auth-page auth-signup-page">
+  <aside class="auth-aside"><a class="auth-brand" href="{% url 'coworking:home' %}"><img class="brand-logo" src="{% static 'coworking/images/ijuru-logo.png' %}" alt="Ijuru Hub Ltd"></a><div class="auth-aside-copy"><div class="eyebrow">A PLACE TO FOCUS</div><h1>Your next<br>idea starts<br>somewhere.</h1><p>Create your account to reserve a desk, private office or meeting room at Ijuru Hub.</p><div class="auth-location"><span></span>42 KG 40 St · Kigali</div></div><div class="auth-decoration" aria-hidden="true"><i></i><i></i><i></i><b>MAKE<br>SPACE</b></div></aside>
+  <div class="auth-main"><div class="auth-card"><a class="back-link" href="{% url 'coworking:listing_list' %}">← Browse spaces</a><div class="auth-mobile-mark"><span class="brand-mark">i</span> ijuru<span>hub</span></div><div class="eyebrow">GET STARTED</div><h2>Create your account</h2><p class="auth-subtitle">A few details, then you can book your workspace.</p><form method="post" class="auth-form form-stack">{% csrf_token %}{% include "coworking/partials/account_form_fields.html" %}<button class="button full-button" type="submit">Create account <span>↗</span></button></form>{% if google_sign_in_configured %}<div class="auth-divider"><span>OR</span></div><form method="post" action="{% provider_login_url 'google' %}">{% csrf_token %}<button class="google-button" type="submit"><span class="google-g">G</span> Continue with Google</button></form>{% endif %}<p class="auth-switch">Already have an account? <a href="{% url 'account_login' %}">Sign in</a></p><p class="auth-secure-note"><span>●</span> Your account details stay private and secure.</p></div></div>
+</section>
+{% endblock %}

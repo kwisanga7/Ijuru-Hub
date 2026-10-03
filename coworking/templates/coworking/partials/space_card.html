@@ -1,0 +1,11 @@
+{% load static %}
+<article class="space-card">
+  <a class="card-image" href="{% url 'coworking:listing_detail' listing.slug %}">
+    {% if listing.photo %}<img src="{{ listing.photo.url }}" alt="{{ listing.name }}">{% elif listing.category == 'desk' %}<img src="{% static 'coworking/images/ijuru-workspace-3.webp' %}" alt="Shared coworking desks at Ijuru Hub">{% elif listing.category == 'private_office' %}<img src="{% static 'coworking/images/ijuru-workspace-1.webp' %}" alt="Private work area at Ijuru Hub">{% elif listing.category == 'meeting_room' %}<img src="{% static 'coworking/images/ijuru-workspace-4.webp' %}" alt="Meeting tables and chairs at Ijuru Hub">{% elif listing.category == 'event_space' %}<img src="{% static 'coworking/images/ijuru-building.webp' %}" alt="Ijuru Hub building in Kigali">{% else %}<img src="{% static 'coworking/images/ijuru-workspace-1.webp' %}" alt="Workspace at Ijuru Hub">{% endif %}
+    <span class="card-arrow">↗</span>
+  </a>
+  <div class="card-meta"><span>{{ listing.get_category_display|upper }}</span><span>{% if listing.available_quantity == 0 %}SOLD OUT{% else %}{{ listing.available_quantity }} OF {{ listing.quantity }} AVAILABLE{% endif %}</span></div>
+  <h3><a href="{% url 'coworking:listing_detail' listing.slug %}">{{ listing.name }}</a></h3>
+  <p>{{ listing.description|truncatewords:16 }}</p>
+  <div class="card-prices"><span>Day <b>{{ listing.daily_price }}{% if listing.currency_code %} {{ listing.currency_code }}{% endif %}</b></span><span>Week <b>{{ listing.weekly_price }}{% if listing.currency_code %} {{ listing.currency_code }}{% endif %}</b></span><span>Month <b>{{ listing.monthly_price }}{% if listing.currency_code %} {{ listing.currency_code }}{% endif %}</b></span></div>
+</article>
