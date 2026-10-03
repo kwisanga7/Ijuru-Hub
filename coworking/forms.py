@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from pathlib import Path
 
 from .models import Booking, CommunityPost, MemberProfile, SpaceListing
 
@@ -24,24 +25,46 @@ class MemberProfileForm(forms.ModelForm):
 class CommunityPostForm(forms.ModelForm):
     class Meta:
         model = CommunityPost
-        fields = ("category", "title", "body", "event_date")
+        fields = ("body", "media")
         widgets = {
             "body": forms.Textarea(attrs={"rows": 6}),
-            "event_date": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["event_date"].input_formats = ["%Y-%m-%dT%H:%M"]
+        self.fields["body"].label = "Description"
+        self.fields["body"].help_text = "Keep your description under 300 words."
+        self.fields["media"].label = "Photo or video"
+        self.fields["media"].required = True
+        self.fields["media"].help_text = "Add one photo or video (up to 100 MB). Videos must be 2 minutes or shorter."
+        self.fields["media"].widget.attrs.update({"accept": "image/*,video/*"})
 
-    def clean(self):
-        cleaned = super().clean()
-        if cleaned.get("category") == CommunityPost.Category.EVENT and not cleaned.get("event_date"):
-            self.add_error("event_date", "Add the event date and time.")
-        if cleaned.get("category") != CommunityPost.Category.EVENT:
-            cleaned["event_date"] = None
-        return cleaned
+    def clean_body(self):
+        description = self.cleaned_data["body"].strip()
+        if len(description.split()) >= 300:
+            raise forms.ValidationError("Keep your description under 300 words (maximum 299).")
+        return description
 
+    def clean_media(self):
+        media = self.cleaned_data.get("media")
+        if not media:
+            return media
+        if media.size > 100 * 1024 * 1024:
+            raise forms.ValidationError("Choose a file smaller than 100 MB.")
+        extension = Path(media.name).suffix.lower()
+        image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif"}
+        video_extensions = {".mp4", ".mov", ".webm", ".m4v", ".ogv"}
+        if extension not in image_extensions | video_extensions:
+            raise forms.ValidationError("Choose an image or video file.")
+        if extension in image_extensions:
+            try:
+                from PIL import Image
+                image = Image.open(media)
+                image.verify()
+                media.seek(0)
+            except Exception:
+                raise forms.ValidationError("This image file could not be opened.")
+        return media
 
 class BookingRequestForm(forms.Form):
     period = forms.ChoiceField(choices=Booking.Period.choices, label="Booking period")

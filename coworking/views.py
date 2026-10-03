@@ -73,10 +73,13 @@ def profile_qr(request, username):
 
 @login_required
 def community_post_create(request):
-    form = CommunityPostForm(request.POST or None)
+    form = CommunityPostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         post = form.save(commit=False)
         post.author = request.user
+        post.category = CommunityPost.Category.POST
+        post.title = post.body.splitlines()[0][:120] or "Community post"
+        post.event_date = None
         post.status = CommunityPost.Status.APPROVED
         post.save()
         messages.success(request, "Your post is now visible on the community board.")

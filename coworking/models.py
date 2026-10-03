@@ -153,6 +153,7 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
         indexes = [models.Index(fields=["user", "read_at", "created_at"], name="notif_user_read_created_idx")]
 
     def __str__(self):
@@ -176,6 +177,7 @@ class MemberProfile(models.Model):
 
 class CommunityPost(models.Model):
     class Category(models.TextChoices):
+        POST = "post", "Post"
         EVENT = "event", "Event"
         PROMOTION = "promotion", "Promotion"
         JOB = "job", "Job offer"
@@ -188,7 +190,8 @@ class CommunityPost(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="community_posts")
     category = models.CharField(max_length=12, choices=Category.choices)
     title = models.CharField(max_length=120)
-    body = models.TextField(max_length=1800)
+    body = models.TextField(max_length=5000)
+    media = models.FileField(upload_to="community/", blank=True)
     event_date = models.DateTimeField(null=True, blank=True, help_text="For events, enter the date and time.")
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -197,6 +200,10 @@ class CommunityPost(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    @property
+    def media_is_video(self):
+        return self.media.name.lower().endswith((".mp4", ".mov", ".webm", ".m4v", ".ogv"))
 
     def __str__(self):
         return self.title
