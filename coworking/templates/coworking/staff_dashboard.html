@@ -4,7 +4,7 @@
 <section class="staff-dashboard">
   <div class="staff-head">
     <div><div class="eyebrow">IJURU HUB · OPERATIONS</div><h1>Good day,<br><span>{{ user.first_name|default:user.username }}.</span></h1><p>Here’s what needs attention at the space today.</p></div>
-    <a class="button" href="{% url 'coworking:staff_space_create' %}">Add a space <span>↗</span></a>
+    <div class="staff-head-actions"><a class="button button-outline" href="{% url 'coworking:staff_monthly_report' %}">Monthly report <span>↗</span></a><a class="button" href="{% url 'coworking:staff_space_create' %}">Add a space <span>↗</span></a></div>
   </div>
   <div class="staff-metrics">
     <a class="metric-card metric-attention" href="#payment-review"><span class="metric-label">PAYMENT REVIEW</span><strong>{{ payment_queue_count }}</strong><span class="metric-foot">Bookings awaiting your review <b>↘</b></span></a>

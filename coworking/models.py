@@ -162,6 +162,7 @@ class Notification(models.Model):
 
 class MemberProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="member_profile")
+    photo = models.ImageField(upload_to="member_profiles/", blank=True)
     display_name = models.CharField(max_length=120, blank=True)
     job_title = models.CharField(max_length=120, blank=True)
     company = models.CharField(max_length=140, blank=True)

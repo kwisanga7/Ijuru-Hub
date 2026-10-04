@@ -1,4 +1,6 @@
 import json
+import calendar
+from datetime import date, datetime, time
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -8,7 +10,8 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncDate
 from django.utils.dateparse import parse_date
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseForbidden
@@ -19,7 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 import qrcode
 from io import BytesIO
 
-from .forms import BookingRequestForm, CommunityPostForm, CustomerRegistrationForm, MemberProfileForm, SpaceListingForm, StaffAccountCreationForm
+from .forms import BookingRequestForm, CommunityPostForm, CustomerRegistrationForm, MemberProfileForm, SpaceListingForm, StaffAccountCreationForm, StaffBookingForm
 from .models import Booking, CommunityPost, MemberProfile, MoMoPayment, Notification, SpaceListing
 from .notifications import mark_read as mark_notification_read
 from .notifications import notify_staff, notify_user
@@ -38,7 +41,7 @@ def home(request):
 @login_required
 def profile_edit(request):
     profile, _ = MemberProfile.objects.get_or_create(user=request.user)
-    form = MemberProfileForm(request.POST or None, instance=profile)
+    form = MemberProfileForm(request.POST or None, request.FILES or None, instance=profile)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Your member profile has been saved.")
@@ -51,7 +54,29 @@ def member_profile(request, username):
     profile, _ = MemberProfile.objects.get_or_create(user=member)
     if not profile.display_name:
         profile.display_name = member.get_full_name() or member.username
-    return render(request, "coworking/member_profile.html", {"member": member, "profile": profile})
+    is_owner = request.user.is_authenticated and request.user.pk == member.pk
+    member_posts = CommunityPost.objects.filter(author=member).select_related("author", "author__member_profile")
+    if not is_owner:
+        member_posts = member_posts.filter(status=CommunityPost.Status.APPROVED)
+    staff_posts = CommunityPost.objects.filter(
+        status=CommunityPost.Status.APPROVED,
+        author__is_staff=True,
+    ).exclude(author=member).select_related("author", "author__member_profile")
+    available_spaces = SpaceListing.objects.filter(is_active=True)
+    today = timezone.localdate()
+    available_today = []
+    for listing in available_spaces:
+        listing.available_quantity = available_quantity(listing, today, Booking.Period.DAY)
+        if listing.available_quantity > 0:
+            available_today.append(listing)
+    return render(request, "coworking/member_profile.html", {
+        "member": member,
+        "profile": profile,
+        "member_posts": member_posts,
+        "staff_posts": staff_posts,
+        "available_spaces": available_today,
+        "is_owner": is_owner,
+    })
 
 
 @login_required
@@ -465,6 +490,162 @@ def staff_bookings(request):
         "page": page, "status": status, "query": query, "statuses": Booking.Status.choices,
         "today": timezone.localdate(),
     })
+
+
+@staff_member_required
+def staff_monthly_report(request):
+    selected_month = request.GET.get("month", "")
+    try:
+        month_start = date.fromisoformat(f"{selected_month}-01")
+        if month_start.strftime("%Y-%m") != selected_month:
+            raise ValueError
+    except ValueError:
+        today = timezone.localdate()
+        month_start = today.replace(day=1)
+        selected_month = month_start.strftime("%Y-%m")
+
+    days_in_month = calendar.monthrange(month_start.year, month_start.month)[1]
+    next_month = date(month_start.year + (month_start.month == 12), 1 if month_start.month == 12 else month_start.month + 1, 1)
+    start_at = timezone.make_aware(datetime.combine(month_start, time.min))
+    end_at = timezone.make_aware(datetime.combine(next_month, time.min))
+
+    def daily_counts(queryset, field):
+        rows = queryset.filter(**{f"{field}__gte": start_at, f"{field}__lt": end_at})
+        return {
+            row["day"].day: row["total"]
+            for row in rows.annotate(day=TruncDate(field)).values("day").annotate(total=Count("pk"))
+        }
+
+    member_counts = daily_counts(User.objects.all(), "date_joined")
+    booking_counts = daily_counts(Booking.objects.all(), "submitted_at")
+    confirmed_counts = daily_counts(
+        Booking.objects.filter(status=Booking.Status.BOOKED), "reviewed_at"
+    )
+    post_counts = daily_counts(CommunityPost.objects.all(), "created_at")
+    checkin_counts = daily_counts(Booking.objects.filter(checked_in_at__isnull=False), "checked_in_at")
+
+    series = [
+        ("New members", "members", member_counts),
+        ("Booking requests", "bookings", booking_counts),
+        ("Confirmed bookings", "confirmed", confirmed_counts),
+        ("Community posts", "posts", post_counts),
+        ("Check-ins", "checkins", checkin_counts),
+    ]
+    peak = max((max(values.values(), default=0) for _label, _key, values in series), default=0) or 1
+    chart_days = []
+    for day in range(1, days_in_month + 1):
+        bars = []
+        for label, key, values in series:
+            count = values.get(day, 0)
+            bars.append({"key": key, "value": count, "height": round(count / peak * 100) if count else 0, "label": label})
+        chart_days.append({"day": day, "show_label": day == 1 or day % 5 == 0 or day == days_in_month, "bars": bars})
+
+    request_total = sum(booking_counts.values())
+    confirmed_total = sum(confirmed_counts.values())
+    money_by_currency = {}
+    momo_received = MoMoPayment.objects.filter(
+        status=MoMoPayment.Status.SUCCESSFUL,
+        updated_at__gte=start_at,
+        updated_at__lt=end_at,
+    ).values("booking__currency_code").annotate(total=Sum("booking__amount_due"))
+    for row in momo_received:
+        currency = row["booking__currency_code"] or "Unspecified"
+        money_by_currency[currency] = money_by_currency.get(currency, 0) + row["total"]
+    manual_received = Booking.objects.filter(
+        status=Booking.Status.BOOKED,
+        reviewed_at__gte=start_at,
+        reviewed_at__lt=end_at,
+        momo_payment__isnull=True,
+    ).values("currency_code").annotate(total=Sum("amount_due"))
+    for row in manual_received:
+        currency = row["currency_code"] or "Unspecified"
+        money_by_currency[currency] = money_by_currency.get(currency, 0) + row["total"]
+    money_received = [
+        {"currency_code": currency, "total": amount}
+        for currency, amount in sorted(money_by_currency.items())
+    ]
+    context = {
+        "month_value": selected_month,
+        "month_label": month_start.strftime("%B %Y"),
+        "days_in_month": days_in_month,
+        "chart_days": chart_days,
+        "series": [(label, key) for label, key, _values in series],
+        "new_members": sum(member_counts.values()),
+        "booking_requests": request_total,
+        "confirmed_bookings": confirmed_total,
+        "community_posts_total": sum(post_counts.values()),
+        "checkins_total": sum(checkin_counts.values()),
+        "money_received": money_received,
+    }
+    return render(request, "coworking/staff_monthly_report.html", context)
+
+
+@staff_member_required
+def staff_booking_create(request):
+    form = StaffBookingForm(request.POST or None)
+    use_momo = momo_configured()
+    if not use_momo:
+        form.fields.pop("momo_phone_number", None)
+    if request.method == "POST" and form.is_valid():
+        customer = form.cleaned_data["customer"]
+        listing = form.cleaned_data["listing"]
+        if use_momo and listing.currency_code != "RWF":
+            form.add_error("listing", "MTN MoMo checkout requires the listing currency to be RWF.")
+        else:
+            try:
+                booking = submit_booking(
+                    listing_id=listing.pk,
+                    customer=customer,
+                    period=form.cleaned_data["period"],
+                    starts_on=form.cleaned_data["starts_on"],
+                    payment_reference=(
+                        f"Staff-arranged booking; customer pays via {form.cleaned_data['momo_phone_number']}"
+                        if use_momo else "Staff-arranged booking; customer to pay directly"
+                    ),
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                if use_momo:
+                    booking.status = Booking.Status.PAYMENT_PENDING
+                    booking.save(update_fields=["status", "ends_on"])
+                    try:
+                        request_momo_payment(booking=booking, phone_number=form.cleaned_data["momo_phone_number"])
+                    except MoMoError as exc:
+                        booking.status = Booking.Status.PAYMENT_REVIEW
+                        booking.review_note = f"Staff-created booking; MoMo request could not start: {exc}"[:1000]
+                        booking.save(update_fields=["status", "review_note", "ends_on"])
+                        notify_user(
+                            user=customer,
+                            title="Booking arranged; payment needs follow-up",
+                            message=f"Ijuru Hub staff arranged booking #{booking.pk} for {listing.name}, but the MoMo request could not start. Contact Ijuru Hub to arrange payment within one hour.",
+                            category=Notification.Category.PAYMENT,
+                            target_url=reverse("coworking:booking_detail", args=[booking.pk]),
+                            dedupe_key=f"booking-{booking.pk}-staff-momo-failed",
+                        )
+                        messages.warning(request, "The MoMo request could not be sent. The customer’s space is held for one hour while staff arrange payment.")
+                    else:
+                        notify_user(
+                            user=customer,
+                            title="Approve your booking payment",
+                            message=f"Ijuru Hub staff arranged booking #{booking.pk} for {listing.name}. Approve the MTN MoMo request on your phone to confirm it.",
+                            category=Notification.Category.PAYMENT,
+                            target_url=reverse("coworking:booking_detail", args=[booking.pk]),
+                            dedupe_key=f"booking-{booking.pk}-staff-momo-requested",
+                        )
+                        messages.success(request, f"Booking arranged for {customer.get_full_name() or customer.username}. They must approve the payment request to confirm the space.")
+                else:
+                    notify_user(
+                        user=customer,
+                        title="Booking arranged; payment needed",
+                        message=f"Ijuru Hub staff arranged booking #{booking.pk} for {listing.name}. Complete payment within one hour to keep the space held.",
+                        category=Notification.Category.BOOKING,
+                        target_url=reverse("coworking:booking_detail", args=[booking.pk]),
+                        dedupe_key=f"booking-{booking.pk}-staff-manual-payment",
+                    )
+                    messages.success(request, f"Booking hold created for {customer.get_full_name() or customer.username}. The space will be booked after payment is confirmed.")
+                return redirect("coworking:staff_bookings")
+    return render(request, "coworking/staff_booking_form.html", {"form": form, "momo_enabled": use_momo})
 
 
 @staff_member_required

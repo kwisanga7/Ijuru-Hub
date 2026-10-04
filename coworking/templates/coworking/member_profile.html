@@ -1,5 +1,34 @@
 {% extends "coworking/base.html" %}
 {% block title %}{{ profile.display_name }}{% endblock %}
 {% block content %}
-<section class="account-page member-page"><a class="back-link" href="{% url 'coworking:home' %}">← Ijuru Hub home</a><div class="member-profile-card"><div class="member-avatar">{{ profile.display_name|default:member.username|first|upper }}</div><div class="eyebrow">IJURU HUB MEMBER</div><h1>{{ profile.display_name|default:member.username }}</h1>{% if profile.job_title or profile.company %}<p class="member-role">{{ profile.job_title }}{% if profile.job_title and profile.company %} · {% endif %}{{ profile.company }}</p>{% endif %}{% if profile.bio %}<p class="member-bio">{{ profile.bio|linebreaksbr }}</p>{% endif %}{% if profile.website %}<a class="text-link" href="{{ profile.website }}" target="_blank" rel="noopener">Visit website ↗</a>{% endif %}{% if profile.show_email and profile.public_email %}<p><a class="text-link" href="mailto:{{ profile.public_email }}">{{ profile.public_email }}</a></p>{% endif %}<div class="member-profile-actions">{% if user.is_authenticated and user.pk == member.pk %}<a class="button" href="{% url 'coworking:profile_edit' %}">Edit profile</a><a class="text-link" href="{% url 'coworking:profile_card' %}">View printable member card ↗</a>{% endif %}</div></div></section>
+<section class="account-page member-page">
+  <a class="back-link" href="{% url 'coworking:home' %}">← Ijuru Hub home</a>
+  <div class="member-profile-card">
+    <div class="member-avatar">{% if profile.photo %}<img src="{{ profile.photo.url }}" alt="{{ profile.display_name|default:member.username }} profile picture">{% else %}{{ profile.display_name|default:member.username|first|upper }}{% endif %}</div>
+    <div class="eyebrow">IJURU HUB MEMBER</div>
+    <h1>{{ profile.display_name|default:member.username }}</h1>
+    {% if profile.job_title or profile.company %}<p class="member-role">{{ profile.job_title }}{% if profile.job_title and profile.company %} · {% endif %}{{ profile.company }}</p>{% endif %}
+    {% if profile.bio %}<p class="member-bio">{{ profile.bio|linebreaksbr }}</p>{% endif %}
+    {% if profile.website %}<a class="text-link" href="{{ profile.website }}" target="_blank" rel="noopener">Visit website ↗</a>{% endif %}
+    {% if profile.show_email and profile.public_email %}<p><a class="text-link" href="mailto:{{ profile.public_email }}">{{ profile.public_email }}</a></p>{% endif %}
+    <div class="member-profile-actions">{% if is_owner %}<a class="button" href="{% url 'coworking:profile_edit' %}">Edit profile</a><a class="text-link" href="{% url 'coworking:profile_card' %}">View printable member card ↗</a>{% endif %}</div>
+  </div>
+
+  <div class="member-profile-content">
+    <section class="member-content-section">
+      <div class="member-content-heading"><div><div class="eyebrow">FROM THIS MEMBER</div><h2>{% if is_owner %}My posts{% else %}{{ profile.display_name|default:member.username }}’s posts{% endif %}</h2></div>{% if is_owner %}<a class="text-link" href="{% url 'coworking:community_post_create' %}">Create a post <span>＋</span></a>{% endif %}</div>
+      {% if member_posts %}<div class="community-grid">{% for post in member_posts %}{% include "coworking/partials/community_post_card.html" with post=post show_post_status=is_owner %}{% endfor %}</div>{% else %}<div class="profile-section-empty"><h3>No posts yet</h3><p>{% if is_owner %}Share a photo or video with the Ijuru Hub community.{% else %}This member has not shared a post yet.{% endif %}</p>{% if is_owner %}<a class="text-link" href="{% url 'coworking:community_post_create' %}">Create your first post <span>↗</span></a>{% endif %}</div>{% endif %}
+    </section>
+
+    <section class="member-content-section">
+      <div class="member-content-heading"><div><div class="eyebrow">EXPLORE THE HUB</div><h2>Available spaces</h2></div><a class="text-link" href="{% url 'coworking:listing_list' %}">Browse all spaces <span>↗</span></a></div>
+      {% if available_spaces %}<div class="space-grid">{% for listing in available_spaces %}{% include "coworking/partials/space_card.html" with listing=listing %}{% endfor %}</div>{% else %}<div class="profile-section-empty"><h3>No spaces available today</h3><p>Check the spaces page for upcoming availability.</p><a class="text-link" href="{% url 'coworking:listing_list' %}">View spaces <span>↗</span></a></div>{% endif %}
+    </section>
+
+    <section class="member-content-section">
+      <div class="member-content-heading"><div><div class="eyebrow">FROM THE IJURU HUB TEAM</div><h2>Staff posts</h2></div></div>
+      {% if staff_posts %}<div class="community-grid">{% for post in staff_posts %}{% include "coworking/partials/community_post_card.html" with post=post show_post_author=True %}{% endfor %}</div>{% else %}<div class="profile-section-empty"><p>There are no staff posts to show right now.</p></div>{% endif %}
+    </section>
+  </div>
+</section>
 {% endblock %}

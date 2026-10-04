@@ -23,25 +23,31 @@
   <header class="topbar">
     <a class="brand" href="{% url 'coworking:home' %}" aria-label="Ijuru Hub home"><img class="brand-logo" src="{% static 'coworking/images/ijuru-logo.png' %}" alt="Ijuru Hub Ltd"></a>
     <nav class="main-nav" aria-label="Main navigation">
-      <a href="{% url 'coworking:home' %}">Home</a>
-      <a href="{% url 'coworking:listing_list' %}">Spaces</a>
-      <a href="{% url 'coworking:home' %}#about">About</a>
-      <a href="{% url 'coworking:home' %}#location">Location</a>
+      <a class="{% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %} href="{% url 'coworking:home' %}">Home</a>
+      <a class="{% if request.resolver_match.url_name == 'listing_list' or request.resolver_match.url_name == 'listing_detail' or request.resolver_match.url_name == 'booking_create' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'listing_list' or request.resolver_match.url_name == 'listing_detail' or request.resolver_match.url_name == 'booking_create' %}aria-current="page"{% endif %} href="{% url 'coworking:listing_list' %}">Spaces</a>
+      <a class="section-nav-about" href="{% url 'coworking:home' %}#about">About</a>
+      <a class="section-nav-location" href="{% url 'coworking:home' %}#location">Location</a>
     </nav>
     <div class="nav-actions">
       {% if user.is_authenticated %}
-        <a class="nav-link" href="{% url 'coworking:community_post_create' %}">Create post</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'community_post_create' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'community_post_create' %}aria-current="page"{% endif %} href="{% url 'coworking:community_post_create' %}">Create post</a>
         <details class="account-menu">
           <summary class="account-menu-trigger">Account{% if unread_notification_count %}<b>{{ unread_notification_count }}</b>{% endif %}<span aria-hidden="true">⌄</span></summary>
           <div class="account-menu-panel">
-            <a href="{% url 'coworking:member_profile' user.username %}">My profile</a>
-            <a href="{% url 'coworking:profile_card' %}">Member card</a>
-            <a href="{% url 'coworking:my_bookings' %}">My bookings</a>
-            <a href="{% url 'coworking:notification_list' %}">Notifications{% if unread_notification_count %}<b>{{ unread_notification_count }} unread</b>{% endif %}</a>
+            <a class="{% if request.resolver_match.url_name == 'member_profile' or request.resolver_match.url_name == 'profile_edit' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'member_profile' or request.resolver_match.url_name == 'profile_edit' %}aria-current="page"{% endif %} href="{% url 'coworking:member_profile' user.username %}">My profile</a>
+            <a class="{% if request.resolver_match.url_name == 'profile_card' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'profile_card' %}aria-current="page"{% endif %} href="{% url 'coworking:profile_card' %}">Member card</a>
+            {% if not user.is_staff %}<a class="{% if request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'booking_detail' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'booking_detail' %}aria-current="page"{% endif %} href="{% url 'coworking:my_bookings' %}">My bookings</a>{% endif %}
+            <a class="{% if request.resolver_match.url_name == 'notification_list' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'notification_list' %}aria-current="page"{% endif %} href="{% url 'coworking:notification_list' %}">Notifications{% if unread_notification_count %}<b>{{ unread_notification_count }} unread</b>{% endif %}</a>
+            {% if user.is_staff %}
+              <a class="{% if request.resolver_match.url_name == 'staff_spaces' or request.resolver_match.url_name == 'staff_space_create' or request.resolver_match.url_name == 'staff_space_edit' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'staff_spaces' or request.resolver_match.url_name == 'staff_space_create' or request.resolver_match.url_name == 'staff_space_edit' %}aria-current="page"{% endif %} href="{% url 'coworking:staff_spaces' %}">Spaces</a>
+              <a class="{% if request.resolver_match.url_name == 'staff_bookings' or request.resolver_match.url_name == 'staff_booking_create' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'staff_bookings' or request.resolver_match.url_name == 'staff_booking_create' %}aria-current="page"{% endif %} href="{% url 'coworking:staff_bookings' %}">Bookings</a>
+              <a class="{% if request.resolver_match.url_name == 'staff_people' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'staff_people' %}aria-current="page"{% endif %} href="{% url 'coworking:staff_people' %}">People</a>
+              <a class="{% if request.resolver_match.url_name == 'staff_community_posts' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'staff_community_posts' %}aria-current="page"{% endif %} href="{% url 'coworking:staff_community_posts' %}">Community review</a>
+              <a class="{% if request.resolver_match.url_name == 'staff_monthly_report' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'staff_monthly_report' %}aria-current="page"{% endif %} href="{% url 'coworking:staff_monthly_report' %}">Monthly report</a>
+            {% endif %}
             <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
           </div>
         </details>
-        {% if user.is_staff %}<a class="nav-link" href="{% url 'coworking:staff_dashboard' %}">Dashboard</a><a class="nav-link" href="{% url 'coworking:staff_spaces' %}">Spaces</a><a class="nav-link" href="{% url 'coworking:staff_bookings' %}">Bookings</a><a class="nav-link" href="{% url 'coworking:staff_people' %}">People</a><a class="nav-link" href="{% url 'coworking:staff_community_posts' %}">Community review</a>{% endif %}
       {% else %}
         <a class="nav-link" href="{% url 'account_login' %}">Sign in</a>
         <a class="button button-small" href="{% url 'account_signup' %}">Create account</a>

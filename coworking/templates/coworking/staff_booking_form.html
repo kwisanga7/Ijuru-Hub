@@ -1,0 +1,20 @@
+{% extends "coworking/base.html" %}
+{% block title %}Book for a customer{% endblock %}
+{% block content %}
+<section class="manage-page manage-form-page">
+  <a class="back-link" href="{% url 'coworking:staff_bookings' %}">← Manage bookings</a>
+  <div class="eyebrow">STAFF BOOKING</div>
+  <h1>Book for a customer</h1>
+  <p class="manage-intro">Choose the customer, space and dates. The customer pays on their own phone; the booking confirms after payment is verified.</p>
+  <form method="post" class="manage-form">
+    {% csrf_token %}
+    {% include "coworking/partials/account_form_fields.html" %}
+    {% if momo_enabled %}
+      <div class="payment-reminder"><strong>Customer pays with MTN MoMo</strong><p>An approval request will be sent to the customer’s number. Their space is held for one hour and confirms automatically after MTN verifies payment.</p></div>
+    {% else %}
+      <div class="payment-reminder"><strong>Manual payment</strong><p>The customer’s space is held for one hour. After they pay, staff must verify the payment from the booking review queue to confirm the space.</p></div>
+    {% endif %}
+    <div class="manage-form-actions"><button class="button" type="submit">Create booking hold <span>↗</span></button><a class="text-link" href="{% url 'coworking:staff_bookings' %}">Cancel</a></div>
+  </form>
+</section>
+{% endblock %}

@@ -19,6 +19,10 @@ The first Django build for Ijuru Hub Ltd coworking space in Kigali. It includes 
 - Styled sign-in and registration pages with field-level help and validation messages; Google sign-in appears when OAuth credentials are configured.
 - Customer booking status and a QR code after confirmation. A logged-in staff account can scan/open the code to record check-in and check-out during the booking dates.
 - An in-site notification inbox with unread counts for customers and staff. It reports new bookings, payment outcomes, check-in/check-out, and new member registration; selecting an item opens the related booking or management page.
+- A community board for member and staff posts, with required image/video uploads for member posts and a two-minute server-checked video limit.
+- Public member profiles with optional profile pictures, a printable member card, each member's published posts, current spaces available today, and staff posts.
+- Staff bookings created for existing members, with payment requested from the customer's own MTN MoMo number or placed in manual payment review.
+- Staff monthly activity reports with member, booking, post, check-in, and received-payment totals, plus a print-to-PDF layout.
 - PostgreSQL configuration through `DATABASE_URL`; local SQLite is used when it is not set.
 - Bootstrap 5.3 is included for the interface toolkit, with Ijuru Hub’s responsive visual styling layered over it.
 
@@ -92,7 +96,7 @@ Without MTN credentials, the site retains the existing manual payment review flo
 - A one-month booking is currently a single booking period, not an automatically renewing subscription.
 - Listing photos, descriptions, actual quantities, prices, and policies must be supplied by Ijuru Hub.
 - The staff portal is restricted to accounts with staff access; staff share the same operational permissions, while staff account creation and deactivation are limited to superusers. Public visitors can browse without an account; booking requires signup or sign-in.
-- Guest hosting, event-specific rules, refunds, and detailed reports are not implemented in this first slice. Notifications appear inside the website; email and SMS delivery are not configured.
+- Guest hosting, event-specific rules, and refunds are not implemented. Notifications appear inside the website; email and SMS delivery are not configured.
 
 ## Before production
 

@@ -1,0 +1,7 @@
+<article class="community-card profile-post-card">
+  <div class="community-card-top"><span class="post-tag post-tag-{{ post.category }}">{{ post.get_category_display }}</span>{% if post.event_date %}<time>{{ post.event_date|date:"M j, Y · H:i" }}</time>{% else %}<time>{{ post.created_at|date:"M j, Y" }}</time>{% endif %}</div>
+  {% if post.media %}{% if post.media_is_video %}<video class="community-media" controls preload="metadata" src="{{ post.media.url }}"></video>{% else %}<img class="community-media" src="{{ post.media.url }}" alt="Media shared in {{ post.title }}">{% endif %}{% endif %}
+  <h3>{{ post.title }}</h3><p>{{ post.body|linebreaksbr }}</p>
+  {% if show_post_status and post.status != "approved" %}<span class="post-status-note">{{ post.get_status_display }}</span>{% endif %}
+  {% if show_post_author %}<div class="post-byline">Shared by {{ post.author.member_profile.display_name|default:post.author.get_full_name|default:post.author.username }}</div>{% endif %}
+</article>

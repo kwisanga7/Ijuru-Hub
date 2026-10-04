@@ -1,0 +1,27 @@
+{% extends "coworking/base.html" %}
+{% block title %}Monthly activity report{% endblock %}
+{% block content %}
+<section class="monthly-report">
+  <a class="back-link" href="{% url 'coworking:staff_dashboard' %}">← Staff dashboard</a>
+  <div class="report-heading">
+    <div><div class="eyebrow">IJURU HUB · WEBSITE ACTIVITY</div><h1>Monthly report</h1><p>Member and booking activity recorded during {{ month_label }}.</p></div>
+    <div class="report-actions"><form class="report-month-picker" method="get"><label for="report-month">Choose month</label><input id="report-month" type="month" name="month" value="{{ month_value }}"><button class="button" type="submit">View report</button></form><button class="button report-print-button" type="button" onclick="window.print()">Print / Save PDF</button></div>
+  </div>
+  <div class="report-metrics">
+    <article><span>NEW MEMBERS</span><strong>{{ new_members }}</strong><small>Accounts created this month</small></article>
+    <article><span>BOOKING REQUESTS</span><strong>{{ booking_requests }}</strong><small>Requests submitted this month</small></article>
+    <article><span>CONFIRMED BOOKINGS</span><strong>{{ confirmed_bookings }}</strong><small>Payments verified this month</small></article>
+    <article class="report-money-card"><span>MONEY RECEIVED</span>{% if money_received %}{% for amount in money_received %}<strong>{{ amount.total|floatformat:2 }} {{ amount.currency_code }}</strong>{% endfor %}<small>Successful MoMo and staff-confirmed manual payments during {{ month_label }}</small>{% else %}<strong>0</strong><small>No payments recorded as received this month</small>{% endif %}</article>
+    <article><span>COMMUNITY POSTS</span><strong>{{ community_posts_total }}</strong><small>Posts created this month</small></article>
+    <article><span>CHECK-INS</span><strong>{{ checkins_total }}</strong><small>Visits recorded this month</small></article>
+  </div>
+  <section class="report-chart-card">
+    <div class="report-chart-heading"><div><div class="eyebrow">DAILY ACTIVITY</div><h2>Actions across {{ month_label }}</h2><p>Each day compares the activity shown in the legend.</p></div></div>
+    <div class="report-legend">{% for label,key in series %}<span><i class="report-color-{{ key }}"></i>{{ label }}</span>{% endfor %}</div>
+    <div class="report-chart-scroll"><div class="report-chart" style="--day-count:{{ days_in_month }}">
+      {% for chart_day in chart_days %}<div class="report-day"><div class="report-bars">{% for bar in chart_day.bars %}<span class="report-bar report-color-{{ bar.key }}" style="height:{% if bar.height %}{{ bar.height }}{% else %}1{% endif %}%" title="{{ bar.label }} · day {{ chart_day.day }}: {{ bar.value }}" aria-label="{{ bar.label }}, day {{ chart_day.day }}: {{ bar.value }}"></span>{% endfor %}</div><small>{% if chart_day.show_label %}{{ chart_day.day }}{% endif %}</small></div>{% endfor %}
+    </div></div>
+    <div class="report-chart-caption"><span>Day of month</span><span>Hover a bar to see its total.</span></div>
+  </section>
+</section>
+{% endblock %}
